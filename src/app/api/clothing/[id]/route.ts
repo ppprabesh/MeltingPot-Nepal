@@ -1,0 +1,117 @@
+import { NextRequest, NextResponse } from "next/server";
+import dbConnect from "@/lib/mongodb";
+import { Product } from "@/model/Product";
+import { uploadImage } from "@/lib/cloudinary";
+import mongoose from "mongoose";
+
+// ✅ Fetch a single clothing item by ID
+export async function GET(request: NextRequest, context: { params: { id: string } }) {
+  try {
+    await dbConnect();
+  } catch (error) {
+    console.error("Database connection error:", error);
+    return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
+  }
+
+  const id = context.params.id?.trim();
+  
+  if (!id) {
+    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+  }
+
+  try {
+    const clothingItem = await Product.findById(id);
+    if (!clothingItem) {
+      return NextResponse.json({ error: "Clothing item not found" }, { status: 404 });
+    }
+    return NextResponse.json({ clothingItem }, { status: 200 });
+  } catch (error) {
+    console.error("Error fetching clothing item:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+// ✅ Update a clothing item by ID
+export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+  try {
+    await dbConnect();
+  } catch (error) {
+    console.error("Database connection error:", error);
+    return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
+  }
+
+  const id = context.params.id?.trim();
+
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+  }
+
+  try {
+    const formData = await request.formData();
+    const updates: Record<string, any> = {};
+
+    const fields = ["name", "code", "price", "stock", "size", "color", "material", "description"];
+    fields.forEach((field) => {
+      const value = formData.get(field);
+      if (value !== null) {
+        updates[field] = ["stock", "price"].includes(field)
+          ? parseFloat(value as string)
+          : value;
+      }
+    });
+
+    if (formData.has("image")) {
+      const imageFile = formData.get("image") as File;
+      if (imageFile) {
+        const imageBuffer = await imageFile.arrayBuffer();
+        const imageBase64 = Buffer.from(imageBuffer).toString("base64");
+        const imagePath = `data:${imageFile.type};base64,${imageBase64}`;
+        updates.imageUrl = await uploadImage(imagePath);
+      }
+    }
+
+    const updatedClothing = await Product.findByIdAndUpdate(id, updates, { new: true });
+
+    if (!updatedClothing) {
+      return NextResponse.json({ error: "Clothing item not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ updatedClothing }, { status: 200 });
+  } catch (error) {
+    console.error("Error updating clothing item:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
+
+// ✅ Delete a clothing item by ID
+export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+  try {
+    await dbConnect();
+  } catch (error) {
+    console.error("Database connection error:", error);
+    return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
+  }
+
+  const id = context.params.id?.trim();
+
+  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+  }
+
+  try {
+    const deletedClothing = await Product.findByIdAndDelete(id);
+
+    if (!deletedClothing) {
+      return NextResponse.json({ error: "Clothing item not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({ message: "Clothing item deleted successfully" }, { status: 200 });
+  } catch (error) {
+    console.error("Error deleting clothing item:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}

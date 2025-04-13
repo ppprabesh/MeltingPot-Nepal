@@ -9,6 +9,7 @@ import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/app/context/AuthContext";
 import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
+import { CartItem } from "@/types/product";
 
 // Define the type for Product
 interface Product {
@@ -26,6 +27,7 @@ interface Product {
   subType?: 'Hammock' | 'Bag';
   maxWeight?: number;
   volume?: number;
+  quantity?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -35,7 +37,7 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  const { addToCart } = useCart();
+  const { addItem } = useCart();
   const { isLoggedIn } = useAuth();
   const router = useRouter();
   const material = product.material || product.code.split(' ').slice(1).join(' ') || 'N/A';
@@ -46,20 +48,30 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
       router.push("/login");
       return;
     }
-    addToCart(product);
+    
+    if (product.stock <= 0) {
+      toast.error("This product is out of stock");
+      return;
+    }
+
+    addItem({
+      ...product,
+      quantity: 1
+    } as CartItem);
     toast.success(`${product.name} added to cart`);
   };
   
   return (
     <div className="flex flex-col rounded-lg bg-white p-4 shadow-md hover:shadow-lg transition-shadow">
       {/* Product Image */}
-      <div className="relative h-64 w-full mb-4">
+      <div className="relative w-full aspect-square mb-4">
         <Image
           src={product.imageUrl}
           alt={product.name}
           fill
-          className="rounded-lg object-cover"
+          className="rounded-lg object-contain"
           priority={false}
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
       </div>
 

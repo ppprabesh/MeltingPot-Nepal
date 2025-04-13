@@ -1,22 +1,12 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { Product } from "@/types/product";
-
-export type CartItem = {
-  _id: string;
-  name: string;
-  code: string;
-  price: number;
-  imageUrl: string;
-  quantity: number;
-  type: string;
-  subType?: string;
-};
+import { createContext, useContext, useEffect, useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { CartItem, Product } from "@/types/product";
 
 type CartContextType = {
-  isOpen: boolean;
   items: CartItem[];
+  isOpen: boolean;
   totalItems: number;
   totalPrice: number;
   addItem: (item: CartItem) => void;
@@ -28,9 +18,10 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
-export function CartProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(false);
+export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const { toast } = useToast();
 
   useEffect(() => {
     const savedCart = localStorage.getItem("cart");
@@ -44,42 +35,100 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [items]);
 
   const addItem = (item: CartItem) => {
-    setItems((prevItems) => {
-      const existingItem = prevItems.find((i) => i._id === item._id);
+    try {
+      const existingItem = items.find((i) => i._id === item._id);
       if (existingItem) {
-        return prevItems.map((i) =>
-          i._id === item._id ? { ...i, quantity: i.quantity + 1 } : i
+        setItems(
+          items.map((i) =>
+            i._id === item._id
+              ? { ...i, quantity: i.quantity + item.quantity }
+              : i
+          )
         );
+        toast({
+          title: "Cart Updated",
+          description: `${item.name} quantity updated in cart`,
+        });
+      } else {
+        setItems([...items, item]);
+        toast({
+          title: "Added to Cart",
+          description: `${item.name} added to cart`,
+        });
       }
-      return [...prevItems, { ...item, quantity: 1 }];
-    });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add item to cart",
+        variant: "destructive",
+      });
+    }
   };
 
   const removeItem = (id: string) => {
-    setItems((prevItems) => prevItems.filter((item) => item._id !== id));
+    try {
+      setItems(items.filter((item) => item._id !== id));
+      toast({
+        title: "Removed from Cart",
+        description: "Item removed from cart",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to remove item from cart",
+        variant: "destructive",
+      });
+    }
   };
 
   const updateQuantity = (id: string, quantity: number) => {
-    if (quantity < 1) {
-      removeItem(id);
-      return;
+    try {
+      if (quantity < 1) {
+        toast({
+          title: "Error",
+          description: "Quantity must be at least 1",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setItems(
+        items.map((item) =>
+          item._id === id ? { ...item, quantity } : item
+        )
+      );
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update quantity",
+        variant: "destructive",
+      });
     }
-    setItems((prevItems) =>
-      prevItems.map((item) =>
-        item._id === id ? { ...item, quantity } : item
-      )
-    );
   };
 
   const clearCart = () => {
-    setItems([]);
+    try {
+      setItems([]);
+      toast({
+        title: "Cart Cleared",
+        description: "All items removed from cart",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to clear cart",
+        variant: "destructive",
+      });
+    }
   };
 
-  const toggleCart = () => {
-    setIsOpen((prev) => !prev);
-  };
+  const toggleCart = () => setIsOpen(!isOpen);
 
-  const totalItems = items.reduce((total, item) => total + item.quantity, 0);
+  const totalItems = items.reduce(
+    (total, item) => total + item.quantity,
+    0
+  );
+
   const totalPrice = items.reduce(
     (total, item) => total + item.price * item.quantity,
     0
@@ -88,8 +137,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   return (
     <CartContext.Provider
       value={{
-        isOpen,
         items,
+        isOpen,
         totalItems,
         totalPrice,
         addItem,

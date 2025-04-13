@@ -42,8 +42,7 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
     return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
   }
 
-  // No need to `await` context.params.id
-  const id = context.params.id?.trim(); // Access `id` synchronously
+  const id = context.params.id?.trim();
 
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
@@ -53,13 +52,31 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
     const formData = await request.formData();
     const updates: Record<string, any> = {};
 
-    const fields = ["name", "code", "price", "stock", "subType", "maxWeight", "volume", "material"];
+    const fields = ["name", "code", "price", "stock", "subType", "maxWeight", "volume", "material", "description"];
     fields.forEach((field) => {
       const value = formData.get(field);
       if (value !== null) {
-        updates[field] = ["stock", "price", "maxWeight"].includes(field)
-          ? parseFloat(value as string)
-          : value;
+        if (["stock", "price", "maxWeight", "volume"].includes(field)) {
+          const numValue = parseFloat(value as string);
+          if (isNaN(numValue)) {
+            throw new Error(`Invalid ${field} value`);
+          }
+          if (field === "price" && numValue <= 0) {
+            throw new Error("Price must be positive");
+          }
+          if (field === "stock" && numValue < 0) {
+            throw new Error("Stock cannot be negative");
+          }
+          if (field === "maxWeight" && numValue <= 0) {
+            throw new Error("Max weight must be positive");
+          }
+          if (field === "volume" && numValue <= 0) {
+            throw new Error("Volume must be positive");
+          }
+          updates[field] = numValue;
+        } else {
+          updates[field] = value;
+        }
       }
     });
 
@@ -82,6 +99,9 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
     return NextResponse.json({ accessory: updatedAccessory }, { status: 200 });
   } catch (error) {
     console.error("Error updating accessory:", error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
@@ -95,8 +115,7 @@ export async function DELETE(request: NextRequest, context: { params: { id: stri
     return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
   }
 
-  // No need to `await` context.params.id
-  const id = context.params.id?.trim(); // Access `id` synchronously
+  const id = context.params.id?.trim();
 
   if (!id || !mongoose.Types.ObjectId.isValid(id)) {
     return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
@@ -104,6 +123,7 @@ export async function DELETE(request: NextRequest, context: { params: { id: stri
 
   try {
     const deletedAccessory = await Product.findByIdAndDelete(id);
+
     if (!deletedAccessory) {
       return NextResponse.json({ error: "Accessory not found" }, { status: 404 });
     }

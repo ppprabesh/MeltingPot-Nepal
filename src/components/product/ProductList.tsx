@@ -28,6 +28,7 @@ interface Product {
   subType?: 'Hammock' | 'Bag';
   maxWeight?: number;
   volume?: number;
+  quantity?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -174,9 +175,9 @@ const ProductList = ({ productType }: { productType: 'Clothing' | 'Accessories' 
           <input
             type="text"
             placeholder="Search products..."
-            className="pl-10 w-full rounded-full border border-gray-300 py-2 px-4 focus:outline-none focus:ring-2 focus:ring-green-500 text-black"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
         </div>
       </div>

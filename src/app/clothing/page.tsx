@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
@@ -8,12 +9,14 @@ import ProductList from "@/components/product/ProductList";
 import { prefetchProducts } from "@/lib/prefetch";
 
 export default function ClothingPage() {
+  const router = useRouter();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     // Prefetch clothing products
     prefetchProducts(queryClient, 'Clothing');
-  }, [queryClient]);
+    window.scrollTo(0, 0);
+  }, [queryClient, router]);
 
   return (
     <div className="bg-gray-50 min-h-screen">

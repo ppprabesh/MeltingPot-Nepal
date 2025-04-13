@@ -1,52 +1,52 @@
 "use client"
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
-interface AuthContextType {
-  token: string | null;
-  login: (token: string) => void;
-  logout: () => void;
+type AuthContextType = {
   isLoggedIn: boolean;
-}
+  user: any;
+  logout: () => Promise<void>;
+};
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = createContext<AuthContextType>({
+  isLoggedIn: false,
+  user: null,
+  logout: async () => {},
+});
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [token, setToken] = useState<string | null>(null);
+export function AuthProvider({ children }: AuthProviderProps) {
+  const { data: session, status } = useSession();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('authToken');
-    if (storedToken) {
-      setToken(storedToken); // Check localStorage for existing token
-    }
-  }, []);
+    setIsLoggedIn(status === "authenticated");
+  }, [status]);
 
-  const login = (newToken: string) => {
-    localStorage.setItem('authToken', newToken); // Store the token in localStorage
-    setToken(newToken);
+  const logout = async () => {
+    await signOut({ redirect: false });
+    setIsLoggedIn(false);
+    router.push("/");
   };
-
-  const logout = () => {
-    localStorage.removeItem('authToken'); // Remove token from localStorage
-    setToken(null);
-  };
-
-  const isLoggedIn = token !== null;
 
   return (
-    <AuthContext.Provider value={{ token, login, logout, isLoggedIn }}>
+    <AuthContext.Provider
+      value={{
+        isLoggedIn,
+        user: session?.user,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export function useAuth() {
+  return useContext(AuthContext);
+}

@@ -3,10 +3,11 @@
 import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { toast } from "react-hot-toast";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@iconify/react";
+import { toast } from "react-hot-toast";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -26,17 +27,18 @@ export default function LoginPage() {
         email: formData.email,
         password: formData.password,
         redirect: false,
+        callbackUrl: "/",
       });
 
       if (result?.error) {
-        toast.error("Invalid credentials");
+        toast.error(result.error);
       } else {
         toast.success("Logged in successfully");
         router.push("/");
         router.refresh();
       }
     } catch (error) {
-      toast.error("Something went wrong");
+      toast.error("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -134,23 +136,13 @@ export default function LoginPage() {
             </div>
 
             {/* Submit Button */}
-            <div>
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                aria-label="Sign in"
-              >
-                {loading ? (
-                  <span className="flex items-center">
-                    <Icon icon="mdi:loading" className="animate-spin h-5 w-5 mr-2" />
-                    Signing in...
-                  </span>
-                ) : (
-                  "Sign in"
-                )}
-              </button>
-            </div>
+            <Button
+              type="submit"
+              className="w-full bg-green-600 hover:bg-green-700 text-white"
+              disabled={loading}
+            >
+              {loading ? "Signing in..." : "Sign in"}
+            </Button>
 
             {/* Sign Up Link */}
             <div className="text-center">
@@ -158,8 +150,7 @@ export default function LoginPage() {
                 Don't have an account?{" "}
                 <Link
                   href="/signup"
-                  className="font-medium text-green-600 hover:text-green-500 focus:outline-none focus:underline"
-                  aria-label="Create a new account"
+                  className="font-medium text-green-600 hover:text-green-500"
                 >
                   Sign up
                 </Link>

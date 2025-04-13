@@ -17,11 +17,12 @@ import { useCart } from "@/context/CartContext";
 import CartPopup from "./cart/CartPopup";
 import { Icon } from "@iconify/react";
 import { useSession, signOut } from "next-auth/react";
+import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
   const pathname = usePathname();
   const router = useRouter();
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, user, logout } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
@@ -48,6 +49,10 @@ const Navbar = () => {
 
   const isActive = (path: string) => pathname === path;
 
+  const handleLogout = async () => {
+    await logout();
+  };
+
   return (
     <>
       {/* Navbar + Banner Wrapper */}
@@ -68,7 +73,7 @@ const Navbar = () => {
                     />
                   </div>
                   <span className="ml-3 text-2xl font-bold text-gray-800">
-                    The Melting Pot
+                   Melting Pot
                   </span>
                 </Link>
               </div>
@@ -100,49 +105,32 @@ const Navbar = () => {
               <div className="flex items-center space-x-4">
                 <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                   <DropdownMenuTrigger asChild>
-                    <button className="p-2 rounded-full hover:bg-gray-100 focus:outline-none">
-                      <Avatar className="bg-gray-800 h-10 w-10">
-                        <AvatarImage src="/user-avatar.png" alt="User Avatar" />
-                        <AvatarFallback className="text-black">
-                          <User className="h-6 w-6" />
-                        </AvatarFallback>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={user?.image} alt={user?.name} />
+                        <AvatarFallback>{user?.name?.[0] || "U"}</AvatarFallback>
                       </Avatar>
-                    </button>
+                    </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuItem>
-                      <button 
-                        onClick={() => handleProtectedRoute('/profile')} 
-                        className="w-full text-lg text-left"
-                      >
-                        Your Profile
-                      </button>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <button 
-                        onClick={() => handleProtectedRoute('/order-history')} 
-                        className="w-full text-lg text-left"
-                      >
-                        Order History
-                      </button>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      {isLoggedIn ? (
-                        <button
-                          onClick={logout}
-                          className="w-full text-lg bg-red-500 rounded-sm text-white"
-                        >
+                  <DropdownMenuContent className="w-56" align="end" forceMount>
+                    {isLoggedIn ? (
+                      <>
+                        <DropdownMenuItem>
+                          <Link href="/profile" className="w-full">
+                            Profile
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={handleLogout}>
                           Logout
-                        </button>
-                      ) : (
-                        <Link
-                          href="/login"
-                          className="w-full flex items-center justify-center text-lg bg-green-800 rounded-sm text-white"
-                        >
+                        </DropdownMenuItem>
+                      </>
+                    ) : (
+                      <DropdownMenuItem>
+                        <Link href="/login" className="w-full">
                           Login
                         </Link>
-                      )}
-                    </DropdownMenuItem>
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
 

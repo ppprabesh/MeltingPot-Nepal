@@ -58,9 +58,21 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
     fields.forEach((field) => {
       const value = formData.get(field);
       if (value !== null) {
-        updates[field] = ["stock", "price"].includes(field)
-          ? parseFloat(value as string)
-          : value;
+        if (["stock", "price"].includes(field)) {
+          const numValue = parseFloat(value as string);
+          if (isNaN(numValue)) {
+            throw new Error(`Invalid ${field} value`);
+          }
+          if (field === "price" && numValue <= 0) {
+            throw new Error("Price must be positive");
+          }
+          if (field === "stock" && numValue < 0) {
+            throw new Error("Stock cannot be negative");
+          }
+          updates[field] = numValue;
+        } else {
+          updates[field] = value;
+        }
       }
     });
 
@@ -83,6 +95,9 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
     return NextResponse.json({ updatedClothing }, { status: 200 });
   } catch (error) {
     console.error("Error updating clothing item:", error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -2,20 +2,27 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginPage = request.nextUrl.pathname === "/admin/login";
-  
-  // Check if user is authenticated
-  const isAuthenticated = request.cookies.get("adminAuthenticated")?.value === "true";
+  // Handle admin routes
+  if (request.nextUrl.pathname.startsWith("/admin")) {
+    // Allow access to login page
+    if (request.nextUrl.pathname === "/admin/login") {
+      return NextResponse.next();
+    }
 
-  // If trying to access admin routes without authentication
-  if (isAdminRoute && !isLoginPage && !isAuthenticated) {
-    return NextResponse.redirect(new URL("/admin/login", request.url));
+    // Check admin session for all other admin routes
+    const adminCookie = request.cookies.get('admin_session');
+    if (!adminCookie || adminCookie.value !== 'true') {
+      return NextResponse.redirect(new URL("/admin/login", request.url));
+    }
   }
 
-  // If trying to access login page while already authenticated
-  if (isLoginPage && isAuthenticated) {
-    return NextResponse.redirect(new URL("/admin", request.url));
+  // Handle user routes that require authentication
+  const protectedUserRoutes = ['/cart', '/checkout', '/profile'];
+  if (protectedUserRoutes.some(route => request.nextUrl.pathname.startsWith(route))) {
+    const userCookie = request.cookies.get('user_session');
+    if (!userCookie) {
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
   }
 
   return NextResponse.next();
@@ -24,6 +31,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/admin/:path*",
-    "/((?!api|_next/static|_next/image|favicon.ico).*)",
+    "/cart/:path*",
+    "/checkout/:path*",
+    "/profile/:path*"
   ],
 }; 

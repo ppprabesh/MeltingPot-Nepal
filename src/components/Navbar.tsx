@@ -16,7 +16,6 @@ import Image from "next/image";
 import { useCart } from "@/context/CartContext";
 import CartPopup from "./cart/CartPopup";
 import { Icon } from "@iconify/react";
-import { useSession, signOut } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 
 const Navbar = () => {
@@ -27,7 +26,6 @@ const Navbar = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const { totalItems, toggleCart } = useCart();
-  const { data: session } = useSession();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -51,6 +49,7 @@ const Navbar = () => {
 
   const handleLogout = async () => {
     await logout();
+    router.push('/');
   };
 
   return (
@@ -101,8 +100,9 @@ const Navbar = () => {
                 ))}
               </div>
 
-              {/* User Dropdown */}
+              {/* Right Side Icons */}
               <div className="flex items-center space-x-4">
+                {/* User Dropdown */}
                 <DropdownMenu open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" className="relative h-8 w-8 rounded-full">
@@ -120,6 +120,11 @@ const Navbar = () => {
                             Profile
                           </Link>
                         </DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Link href="/orders" className="w-full">
+                            Order History
+                          </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={handleLogout}>
                           Logout
                         </DropdownMenuItem>
@@ -134,7 +139,8 @@ const Navbar = () => {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                <button 
+                {/* Cart Icon */}
+                <button
                   onClick={toggleCart}
                   className="relative p-2 text-gray-700 hover:text-green-600 transition-colors"
                 >
@@ -145,15 +151,15 @@ const Navbar = () => {
                     </span>
                   )}
                 </button>
-              </div>
 
-              {/* Mobile Menu Button */}
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="md:hidden p-2 rounded-md hover:bg-gray-200 focus:outline-none"
-              >
-                <Menu className="h-8 w-8 text-gray-800" />
-              </button>
+                {/* Mobile Menu Button */}
+                <button
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="md:hidden p-2 rounded-md hover:bg-gray-200 focus:outline-none"
+                >
+                  <Menu className="h-8 w-8 text-gray-800" />
+                </button>
+              </div>
             </div>
           </div>
         </nav>
@@ -227,6 +233,41 @@ const Navbar = () => {
                 </Link>
               );
             }
+          )}
+          {isLoggedIn ? (
+            <>
+              <Link
+                href="/profile"
+                className="block py-2 px-4 rounded-md text-lg text-gray-700 hover:bg-gray-100"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                Profile
+              </Link>
+              <Link
+                href="/orders"
+                className="block py-2 px-4 rounded-md text-lg text-gray-700 hover:bg-gray-100"
+                onClick={() => setIsSidebarOpen(false)}
+              >
+                Order History
+              </Link>
+              <button
+                onClick={() => {
+                  handleLogout();
+                  setIsSidebarOpen(false);
+                }}
+                className="block w-full py-2 px-4 rounded-md text-lg text-gray-700 hover:bg-gray-100"
+              >
+                Logout
+              </button>
+            </>
+          ) : (
+            <Link
+              href="/login"
+              className="block py-2 px-4 rounded-md text-lg text-gray-700 hover:bg-gray-100"
+              onClick={() => setIsSidebarOpen(false)}
+            >
+              Login
+            </Link>
           )}
         </nav>
       </aside>

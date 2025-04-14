@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@iconify/react";
 import { toast } from "react-hot-toast";
+import { useAuth } from "@/app/context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -21,24 +22,42 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError("");
 
     try {
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-        callbackUrl: "/",
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
       });
 
-      if (result?.error) {
-        toast.error(result.error);
-      } else {
-        toast.success("Logged in successfully");
-        router.push("/");
-        router.refresh();
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === "User not found") {
+          setError("User does not exist");
+        } else if (data.error === "Invalid email or password") {
+          setError("Invalid credentials");
+        } else {
+          setError(data.error || "Login failed");
+        }
+        return;
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred");
+
+      // Update auth context with user data
+      login({
+        id: data.user.id,
+        name: data.user.name,
+        email: data.user.email,
+      });
+
+      toast.success("Logged in successfully");
+      router.push("/");
+      router.refresh();
+    } catch (error: any) {
+      setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -81,10 +100,12 @@ export default function LoginPage() {
           </div>
 
           {/* Form */}
-          <form className="space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              {/* Email Input */}
-              <div className="relative">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Icon icon="mdi:email" className="h-5 w-5 text-gray-400" />
                 </div>
@@ -93,18 +114,24 @@ export default function LoginPage() {
                   name="email"
                   type="email"
                   required
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
-                  placeholder="Email address"
+                  disabled={loading}
+                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+                  placeholder="Email"
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  aria-label="Email address"
+                  onChange={(e) => {
+                    setFormData({ ...formData, email: e.target.value });
+                    setError("");
+                  }}
+                  aria-label="Email"
                 />
               </div>
+            </div>
 
-              {/* Password Input */}
-              <div className="relative">
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Password
+              </label>
+              <div className="mt-1 relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Icon icon="mdi:lock" className="h-5 w-5 text-gray-400" />
                 </div>
@@ -113,18 +140,21 @@ export default function LoginPage() {
                   name="password"
                   type={showPassword ? "text" : "password"}
                   required
-                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900"
+                  disabled={loading}
+                  className="block w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 bg-white text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
                   placeholder="Password"
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
+                  onChange={(e) => {
+                    setFormData({ ...formData, password: e.target.value });
+                    setError("");
+                  }}
                   aria-label="Password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                  disabled={loading}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   <Icon
@@ -135,16 +165,25 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full bg-green-600 hover:bg-green-700 text-white"
-              disabled={loading}
-            >
-              {loading ? "Signing in..." : "Sign in"}
-            </Button>
+            {error && (
+              <p className="text-red-500 text-sm mt-2">{error}</p>
+            )}
 
-            {/* Sign Up Link */}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            >
+              {loading ? (
+                <div className="flex items-center justify-center">
+                  <Icon icon="mdi:loading" className="animate-spin h-5 w-5 mr-2" />
+                  Signing in...
+                </div>
+              ) : (
+                "Sign in"
+              )}
+            </button>
+
             <div className="text-center">
               <p className="text-sm text-gray-600">
                 Don't have an account?{" "}

@@ -20,14 +20,10 @@ export const authOptions: NextAuthOptions = {
 
           await connectToDatabase();
 
-          const user = await User.findOne({ email: credentials.email });
+          const user = await User.findOne({ email: credentials.email.toLowerCase() });
 
-          if (!user) {
-            throw new Error("No account found with this email");
-          }
-
-          if (!user?.password) {
-            throw new Error("Invalid account configuration");
+          if (!user || !user?.password) {
+            throw new Error("Invalid credentials");
           }
 
           const isCorrectPassword = await bcrypt.compare(
@@ -36,19 +32,19 @@ export const authOptions: NextAuthOptions = {
           );
 
           if (!isCorrectPassword) {
-            throw new Error("Incorrect password");
+            throw new Error("Invalid credentials");
           }
 
           return {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
+            role: user.role,
           };
         } catch (error) {
-          if (error instanceof Error) {
-            throw new Error(error.message);
-          }
-          throw new Error("An error occurred during authentication");
+          // Return null to indicate authentication failure
+          // This will trigger the error callback in the login page
+          return null;
         }
       }
     })
@@ -61,12 +57,14 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
+        session.user.role = token.role;
       }
       return session;
     },

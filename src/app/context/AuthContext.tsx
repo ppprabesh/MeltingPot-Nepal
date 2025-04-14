@@ -1,52 +1,78 @@
 "use client"
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-type AuthContextType = {
-  isLoggedIn: boolean;
-  user: any;
-  logout: () => Promise<void>;
-};
-
-const AuthContext = createContext<AuthContextType>({
-  isLoggedIn: false,
-  user: null,
-  logout: async () => {},
-});
-
-interface AuthProviderProps {
-  children: ReactNode;
+interface User {
+  id: string;
+  name: string;
+  email: string;
 }
 
-export function AuthProvider({ children }: AuthProviderProps) {
-  const { data: session, status } = useSession();
+interface AuthContextType {
+  isLoggedIn: boolean;
+  user: User | null;
+  login: (userData: User) => void;
+  logout: () => void;
+  checkSession: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
 
+  const checkSession = async () => {
+    try {
+      const response = await fetch('/api/auth/session');
+      const data = await response.json();
+      
+      if (data.user) {
+        setIsLoggedIn(true);
+        setUser(data.user);
+      } else {
+        setIsLoggedIn(false);
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Session check failed:', error);
+      setIsLoggedIn(false);
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
-    setIsLoggedIn(status === "authenticated");
-  }, [status]);
+    checkSession();
+  }, []);
+
+  const login = (userData: User) => {
+    setIsLoggedIn(true);
+    setUser(userData);
+  };
 
   const logout = async () => {
-    await signOut({ redirect: false });
-    setIsLoggedIn(false);
-    router.push("/");
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setIsLoggedIn(false);
+      setUser(null);
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
-    <AuthContext.Provider
-      value={{
-        isLoggedIn,
-        user: session?.user,
-        logout,
-      }}
-    >
+    <AuthContext.Provider value={{ isLoggedIn, user, login, logout, checkSession }}>
       {children}
     </AuthContext.Provider>
   );
 }
 
 export function useAuth() {
-  return useContext(AuthContext);
+  const context = useContext(AuthContext);
+  if (context === undefined) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 }

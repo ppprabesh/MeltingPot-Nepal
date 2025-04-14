@@ -3,9 +3,8 @@ import { Alegreya } from "next/font/google";
 import "./globals.css";
 import ClientLayout from "@/components/ClientLayout";
 import Navbar from "@/components/Navbar";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import Providers from "@/components/Providers";
+import { AuthProvider } from "@/app/context/AuthContext";
+import { CartProvider } from "@/context/CartContext";
 
 const alegreya = Alegreya({ subsets: ["latin"], weight: ["400", "700"] });
 
@@ -14,20 +13,20 @@ export const metadata: Metadata = {
   description: "Everything made in Nepal",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
-
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${alegreya.className} min-h-screen flex flex-col`}>
-        <Providers session={session}>
-          <Navbar />
-          <ClientLayout>{children}</ClientLayout>
-        </Providers>
+        <AuthProvider>
+          <CartProvider>
+            <Navbar />
+            <ClientLayout>{children}</ClientLayout>
+          </CartProvider>
+        </AuthProvider>
       </body>
     </html>
   );

@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Product } from '@/model/Product';
-import { connectToDatabase } from '@/lib/mongodb';
+import dbConnect from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
-    await connectToDatabase();
+    await dbConnect();
     
     // Get the type query parameter
     const searchParams = request.nextUrl.searchParams;

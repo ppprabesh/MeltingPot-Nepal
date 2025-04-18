@@ -1,6 +1,6 @@
 // /pages/api/auth/signup.ts
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import dbConnect from '@/lib/mongodb';
 import { User } from "@/model/User";
 import bcrypt from "bcryptjs";
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     // Check if user already exists
     const existingUser = await User.findOne({ email });

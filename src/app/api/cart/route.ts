@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
+import { UserModel } from '@/model/User';
 import dbConnect from '@/lib/mongodb';
-import { User as UserModel } from '@/model/User'; // Assuming the User model has cart methods
 
 // POST - Add item to cart
 export async function POST(request: Request) {

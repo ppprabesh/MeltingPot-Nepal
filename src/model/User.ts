@@ -39,4 +39,5 @@ if (!UserModel.prototype.comparePassword) {
   UserModel.prototype.comparePassword = userSchema.methods.comparePassword;
 }
 
+export { UserModel };
 export const User = UserModel;

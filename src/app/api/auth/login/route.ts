@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import dbConnect from '@/lib/mongodb';
 import { User } from "@/model/User";
 import { cookies } from "next/headers";
 
@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     const user = await User.findOne({ email });
     if (!user) {

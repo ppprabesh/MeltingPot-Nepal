@@ -34,4 +34,5 @@ async function dbConnect(): Promise<Mongoose> {
   return cached.conn;
 }
 
+export { dbConnect as connectToDatabase };
 export default dbConnect;

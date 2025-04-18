@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/mongodb";
+import dbConnect from "@/lib/mongodb";
 import { Order } from "@/model/Order";
 import { getPaymentStatus } from "@/lib/payment";
 
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     const order = await Order.findById(orderId);
     if (!order) {

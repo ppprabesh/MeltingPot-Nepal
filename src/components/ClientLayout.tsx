@@ -16,7 +16,7 @@ export default function ClientLayout({ children }: { children: React.ReactNode }
   return (
     <QueryClientProvider client={queryClient}>
       {isAdminPage ? <AdminNavbar /> : <Navbar />}
-      <main className="flex-grow bg-white pt-28 md:p-6 lg:p-0 relative z-10">{children}</main>
+      <main className="flex-grow bg-white pt-24 md:pt-28 relative z-10">{children}</main>
       {!isAdminPage && <Footer />}
     </QueryClientProvider>
   );

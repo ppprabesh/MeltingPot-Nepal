@@ -2,7 +2,8 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { CartItem, Product } from "@/types/product";
+import { CartItem } from "@/types/product";
+import { useAuth } from "@/app/context/AuthContext";
 
 type CartContextType = {
   items: CartItem[];
@@ -22,20 +23,40 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+  const { isLoggedIn, user } = useAuth();
 
+  // Load cart from localStorage when user logs in
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      setItems(JSON.parse(savedCart));
+    if (isLoggedIn && user) {
+      const userCart = localStorage.getItem(`cart_${user.id}`);
+      if (userCart) {
+        setItems(JSON.parse(userCart));
+      } else {
+        setItems([]);
+      }
+    } else {
+      setItems([]);
     }
-  }, []);
+  }, [isLoggedIn, user]);
 
+  // Save cart to localStorage when items change
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(items));
-  }, [items]);
+    if (isLoggedIn && user) {
+      localStorage.setItem(`cart_${user.id}`, JSON.stringify(items));
+    }
+  }, [items, isLoggedIn, user]);
 
   const addItem = (item: CartItem) => {
     try {
+      if (!isLoggedIn) {
+        toast({
+          title: "Error",
+          description: "Please login to add items to cart",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const existingItem = items.find((i) => i._id === item._id);
       if (existingItem) {
         setItems(
@@ -109,6 +130,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const clearCart = () => {
     try {
       setItems([]);
+      if (isLoggedIn && user) {
+        localStorage.removeItem(`cart_${user.id}`);
+      }
       toast({
         title: "Cart Cleared",
         description: "All items removed from cart",

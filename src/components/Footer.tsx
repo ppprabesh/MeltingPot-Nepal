@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from "react-icons/fa";
+import { FaInstagram } from "react-icons/fa";
 
 export default function Footer() {
   return (
@@ -11,7 +11,7 @@ export default function Footer() {
             <h3 className="text-lg font-bold mb-4">About Us</h3>
             <p className="text-sm text-gray-300">
               We are a leading eCommerce store offering the best in fashion and
-              accessories. Our mission is to provide high-quality products with
+              accessories that are made in Nepal. Our mission is to provide high-quality products with
               exceptional customer service.
             </p>
           </div>
@@ -61,7 +61,7 @@ export default function Footer() {
             <ul className="space-y-2">
               <li>
                 <Link
-                  href="/faq"
+                  href="/#"
                   className="text-sm text-gray-300 hover:text-white"
                 >
                   FAQ
@@ -69,7 +69,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/shipping"
+                  href="/#"
                   className="text-sm text-gray-300 hover:text-white"
                 >
                   Shipping Information
@@ -77,7 +77,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/returns"
+                  href="/#"
                   className="text-sm text-gray-300 hover:text-white"
                 >
                   Returns & Exchanges
@@ -85,7 +85,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link
-                  href="/privacy-policy"
+                  href="/#"
                   className="text-sm text-gray-300 hover:text-white"
                 >
                   Privacy Policy
@@ -98,17 +98,10 @@ export default function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-4">Follow Us</h3>
             <div className="flex space-x-4">
-              <Link
-                href="https://facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-300 hover:text-white"
-              >
-                <FaFacebook className="h-6 w-6" />
-              </Link>
+            
             
               <Link
-                href="https://instagram.com"
+                href="https://www.instagram.com/meltingpot_nepal/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-300 hover:text-white"

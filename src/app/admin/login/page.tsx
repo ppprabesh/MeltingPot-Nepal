@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { setAdminSession, checkAdminSession } from "@/utils/session";
 
 export default function AdminLogin() {
   const router = useRouter();
@@ -12,13 +11,6 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    // Check if already logged in
-    if (checkAdminSession()) {
-      router.push("/admin");
-    }
-  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,9 +30,6 @@ export default function AdminLogin() {
         throw new Error("Invalid credentials");
       }
 
-      // Set admin session with 10-minute timeout
-      setAdminSession();
-      
       // Redirect to admin dashboard
       router.push("/admin");
     } catch (error) {

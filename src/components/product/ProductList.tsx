@@ -102,7 +102,7 @@ const ProductList = ({ productType }: { productType: 'Clothing' | 'Accessories' 
     prefetchProductDetails(queryClient, productId, productType);
   };
 
-  const filteredProducts = products.filter(product => {
+  const filteredProducts = products.filter((product: Product) => {
     // Search filter
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                          product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -168,7 +168,7 @@ const ProductList = ({ productType }: { productType: 'Clothing' | 'Accessories' 
         </div>
         
         {/* Search */}
-        <div className="relative w-full md:w-64">
+        <div className="relative w-full  md:w-[20vw]">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Icon icon="akar-icons:search" className="text-gray-400" />
           </div>
@@ -177,7 +177,7 @@ const ProductList = ({ productType }: { productType: 'Clothing' | 'Accessories' 
             placeholder="Search products..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+            className="w-full px-12 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
           />
         </div>
       </div>
@@ -208,7 +208,7 @@ const ProductList = ({ productType }: { productType: 'Clothing' | 'Accessories' 
       {filteredProducts.length > 0 ? (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {currentProducts.map(product => (
+            {currentProducts.map((product: Product) => (
               <div
                 key={`${product._id}-${product.type}`}
                 onMouseEnter={() => handleProductHover(product._id)}

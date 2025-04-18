@@ -1,43 +1,102 @@
 import mongoose from "mongoose";
 
-export interface Order {
-  user: mongoose.Types.ObjectId;
-  products: Array<{
-    product: mongoose.Types.ObjectId;
-    quantity: number;
-    price: number;
-  }>;
-  totalPrice: number;
-  status: 'pending' | 'paid' | 'shipped' | 'delivered';
-  paymentMethod: 'digitalWallet' | 'creditCard';
-}
-
 const orderSchema = new mongoose.Schema({
-  user: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    required: true,
   },
-  products: [{
-    product: { 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: 'Product', 
-      required: true 
+  items: [
+    {
+      productId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true,
+      },
+      name: {
+        type: String,
+        required: true,
+      },
+      price: {
+        type: Number,
+        required: true,
+      },
+      quantity: {
+        type: Number,
+        required: true,
+        min: 1,
+      },
+      image: {
+        type: String,
+        required: true,
+      },
     },
-    quantity: { type: Number, required: true },
-    price: { type: Number, required: true }
-  }],
-  totalPrice: { type: Number, required: true },
-  status: { 
-    type: String, 
-    enum: ['pending', 'paid', 'shipped', 'delivered'], 
-    default: 'pending' 
+  ],
+  totalAmount: {
+    type: Number,
+    required: true,
+    min: 0,
   },
-  paymentMethod: { 
-    type: String, 
-    enum: ['digitalWallet', 'creditCard'], 
-    required: true 
-  }
-}, { timestamps: true });
+  status: {
+    type: String,
+    enum: ["pending", "completed", "failed", "cancelled"],
+    default: "pending",
+  },
+  paymentMethod: {
+    type: String,
+    enum: ["khalti", "esewa"],
+    required: true,
+  },
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "success", "failed"],
+    default: "pending",
+  },
+  shippingInfo: {
+    fullName: {
+      type: String,
+      required: true,
+    },
+    email: {
+      type: String,
+      required: true,
+    },
+    phone: {
+      type: String,
+      required: true,
+    },
+    address: {
+      type: String,
+      required: true,
+    },
+    city: {
+      type: String,
+      required: true,
+    },
+    zipCode: {
+      type: String,
+      required: true,
+    },
+    state: {
+      type: String,
+      default: "N/A",
+    },
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
-export const OrderModel = mongoose.model<Order>('Order', orderSchema);
+// Update the updatedAt field before saving
+orderSchema.pre("save", function (next) {
+  this.updatedAt = new Date();
+  next();
+});
+
+export const Order = mongoose.models.Order || mongoose.model("Order", orderSchema);
+export default mongoose.models.Order || mongoose.model("Order", orderSchema);

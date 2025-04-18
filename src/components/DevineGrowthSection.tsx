@@ -50,13 +50,10 @@ export default function DevineGrowthSection() {
                     </div>
                     <div className="order-1 flex h-full w-full flex-col justify-center p-4 md:order-none md:h-full md:w-1/2 md:p-2">
                       <h3 className="text-left text-[20px] font-bold text-green-600 md:text-left md:text-[16px] lg:text-[20px]">
-                        Creative Collaborative Working
+                        Affordable and Sustainable
                       </h3>
                       <p className="overflow-hidden text-[14px] font-normal leading-[20px] text-[#020E1A] lg:text-[16px]">
-                        We believe in teamwork and continuous innovation to
-                        create impactful digital solutions. Our office culture
-                        fosters creativity, open communication, and a shared
-                        vision for success.
+                        We believe in providing affordable and sustainable products to our customers. We have been serving our customers for 10 years and we are still growing. We are a team of 100+ people and we aim to provide the best products to our customers.
                       </p>
                     </div>
                   </div>
@@ -69,7 +66,7 @@ export default function DevineGrowthSection() {
                     className="rounded-[20px] object-contain"
                   />
                   <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-black bg-opacity-50 p-4 text-center text-xl text-white">
-                    Innovative Creation
+                   Made Locally for Local People
                   </div>
                 </div>
               </div>
@@ -78,12 +75,12 @@ export default function DevineGrowthSection() {
                 <div className="relative hidden aspect-square w-full md:block md:w-1/4">
                   <Image
                     src="/images/tmp-dark.png"
-                    alt="Future Ready Approach"
+                    alt="melting pot"
                     fill
                     className="rounded-[20px] object-contain"
                   />
                   <div className="absolute inset-0 flex items-center justify-center rounded-[20px] bg-black bg-opacity-50 p-4 text-center text-xl text-white">
-                    Future Ready Approach
+                    Quality over Trend
                   </div>
                 </div>
                 <div className="aspect-auto w-full overflow-hidden rounded-[20px] bg-white p-3 shadow-[0px_3px_32px_rgba(0,0,0,0.06)] md:aspect-[568/369] md:w-3/4">
@@ -98,13 +95,10 @@ export default function DevineGrowthSection() {
                     </div>
                     <div className="flex h-full w-full flex-col justify-center p-4 md:h-full md:w-1/2 md:p-2">
                       <h3 className="mb-2 text-left text-[20px] font-bold text-green-600 md:text-left md:text-[16px] lg:text-[20px]">
-                        Excellence Through Growth
+                       Originality and Creativity
                       </h3>
                       <p className="overflow-hidden text-[14px] font-normal leading-[20px] tracking-[0%] text-[#020E1A] lg:text-[16px]">
-                        We are committed to delivering high-quality solutions
-                        while continuously learning and innovating. At
-                        AideAcent, we embrace challenges as opportunities for
-                        growth—both as individuals and as a company.
+                       We have a team of designer who are passionate about their work and design the prints reflecting the culture of Nepal. And they are hand printed so that the quality is not compromised.
                       </p>
                     </div>
                   </div>

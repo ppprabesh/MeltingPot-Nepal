@@ -172,7 +172,7 @@ export default function AdminDashboard() {
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+          {/* <h1 className="text-2xl font-bold text-gray-800">Admin Dashboard</h1> */}
           <p className="text-gray-600 hidden sm:block">Manage your products</p>
         </div>
         <Button
@@ -256,9 +256,9 @@ export default function AdminDashboard() {
                 <TableCell className="text-gray-700">{product.code}</TableCell>
                 <TableCell className="text-gray-700">Rs. {product.price.toFixed(2)}</TableCell>
                 <TableCell className="text-gray-700">{product.stock}</TableCell>
-                {activeTab === "accessories" && (
-                  <TableCell className="text-gray-700">{product.subType}</TableCell>
-                )}
+                {/* {activeTab === "accessories" && (
+                  // <TableCell className="text-gray-700">{product.subType}</TableCell>
+                )} */}
                 <TableCell>
                   <div className="flex justify-end gap-2">
                     <Button

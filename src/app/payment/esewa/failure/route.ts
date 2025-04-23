@@ -1,18 +1,36 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 
-export async function GET(request: NextRequest) {
+export async function GET(request: Request) {
   try {
-    // Log failure details
-    const searchParams = request.nextUrl.searchParams;
-    console.error('eSewa payment failed:', Object.fromEntries(searchParams.entries()));
+    const { searchParams } = new URL(request.url);
+    const transaction_uuid = searchParams.get('transaction_uuid');
 
-    // Update order status in your database here
-    // ...
+    if (transaction_uuid) {
+      // Update order status in database
+      try {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/orders/${transaction_uuid}/status`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'failed',
+            paymentMethod: 'esewa',
+            paymentId: transaction_uuid,
+          }),
+        });
 
-    // Redirect to failure page
+        if (!response.ok) {
+          throw new Error('Failed to update order status');
+        }
+      } catch (error) {
+        console.error('Error updating order status:', error);
+      }
+    }
+
     return NextResponse.redirect(new URL('/payment/failure', request.url));
   } catch (error) {
-    console.error('Error processing eSewa failure:', error);
+    console.error('Error processing eSewa failure callback:', error);
     return NextResponse.redirect(new URL('/payment/failure', request.url));
   }
 } 

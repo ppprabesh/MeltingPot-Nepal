@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { connectToDatabase } from "@/lib/db";
-import { Order } from "@/model/Order";
+import dbConnect from '@/lib/mongodb';
+import Order from "@/model/Order";
 
 export async function POST(req: Request) {
   try {
@@ -26,7 +26,7 @@ export async function POST(req: Request) {
       );
     }
 
-    await connectToDatabase();
+    await dbConnect();
 
     // Create new order
     const order = new Order({

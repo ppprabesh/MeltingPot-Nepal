@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { connectToDatabase } from "@/lib/db";
+import dbConnect from '@/lib/mongodb';
 import { User } from "@/model/User";
 import { cookies } from "next/headers";
 import bcrypt from "bcryptjs";
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     console.log("Connecting to database...");
-    await connectToDatabase();
+    await dbConnect();
     console.log("Database connected");
 
     console.log("Searching for user with email:", email);

@@ -23,13 +23,31 @@ export default function SignupPage() {
     setLoading(true);
     setError("");
 
+    // Validate password
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
+      setLoading(false);
+      return;
+    }
+
+    // Prevent accidental spaces in password
+    const password = formData.password.trim();
+    if (password !== formData.password) {
+      setError("Password cannot start or end with spaces");
+      setLoading(false);
+      return;
+    }
+
     try {
       const response = await fetch("/api/auth/signup", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          password: password // Use the trimmed password
+        }),
       });
 
       const data = await response.json();

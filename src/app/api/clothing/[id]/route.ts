@@ -5,25 +5,23 @@ import { uploadImage } from "@/lib/cloudinary";
 import mongoose from "mongoose";
 
 // ✅ Fetch a single clothing item by ID
-export async function GET(request: NextRequest, context: { params: { id: string } }) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await dbConnect();
-  } catch (error) {
-    console.error("Database connection error:", error);
-    return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
-  }
 
-  const id = context.params.id?.trim();
+    const id = params.id?.trim();
   
-  if (!id) {
-    return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
-  }
+    if (!id) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
 
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
-  }
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
 
-  try {
     const clothingItem = await Product.findById(id);
     if (!clothingItem) {
       return NextResponse.json({ error: "Clothing item not found" }, { status: 404 });
@@ -36,21 +34,19 @@ export async function GET(request: NextRequest, context: { params: { id: string 
 }
 
 // ✅ Update a clothing item by ID
-export async function PUT(request: NextRequest, context: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await dbConnect();
-  } catch (error) {
-    console.error("Database connection error:", error);
-    return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
-  }
 
-  const id = context.params.id?.trim();
+    const id = params.id?.trim();
 
-  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
-  }
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
 
-  try {
     const formData = await request.formData();
     const updates: Record<string, any> = {};
 
@@ -103,21 +99,19 @@ export async function PUT(request: NextRequest, context: { params: { id: string 
 }
 
 // ✅ Delete a clothing item by ID
-export async function DELETE(request: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await dbConnect();
-  } catch (error) {
-    console.error("Database connection error:", error);
-    return NextResponse.json({ error: "Database connection failed" }, { status: 500 });
-  }
 
-  const id = context.params.id?.trim();
+    const id = params.id?.trim();
 
-  if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
-  }
+    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    }
 
-  try {
     const deletedClothing = await Product.findByIdAndDelete(id);
 
     if (!deletedClothing) {

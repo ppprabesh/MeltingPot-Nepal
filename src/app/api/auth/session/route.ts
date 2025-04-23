@@ -4,7 +4,7 @@ import { User } from "@/model/User";
 
 export async function GET() {
   try {
-    const cookieStore = cookies();
+    const cookieStore = await cookies();
     const session = cookieStore.get("user_session");
 
     if (!session) {

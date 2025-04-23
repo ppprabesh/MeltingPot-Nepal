@@ -1,7 +1,7 @@
 'use server';
 
 import { v4 as uuidv4 } from "uuid";
-import { generateEsewaSignature } from "@/lib/payment";
+import crypto from 'crypto';
 
 export type PaymentMethod = "khalti" | "esewa";
 
@@ -38,38 +38,63 @@ export async function initiatePayment(paymentData: PaymentRequestData) {
 
     switch (method) {
       case "esewa": {
-        const transactionUuid = `${Date.now()}-${uuidv4()}`;
+        const totalAmount = amount;
+        const transactionUuid = transactionId;
+        const productCode = process.env.ESEWA_MERCHANT_ID!;
+
+        console.log('Initiating eSewa payment with:', {
+          totalAmount,
+          transactionUuid,
+          productCode,
+          baseUrl: process.env.NEXT_PUBLIC_BASE_URL
+        });
+
+        // Create signature string
+        const signatureString = `total_amount=${totalAmount},transaction_uuid=${transactionUuid},product_code=${productCode}`;
+        console.log('Signature string:', signatureString);
+        
+        // Generate HMAC signature
+        const hmac = crypto.createHmac('sha256', process.env.ESEWA_MERCHANT_SECRET!);
+        hmac.update(signatureString);
+        const signature = hmac.digest('base64');
+        console.log('Generated signature:', signature);
+
+        // Ensure base URL ends with no trailing slash
+        const baseUrl = process.env.NEXT_PUBLIC_BASE_URL?.replace(/\/$/, '');
+
         const esewaConfig = {
-          amount: amount,
+          amount: totalAmount,
           tax_amount: "0",
-          total_amount: amount,
+          total_amount: totalAmount,
           transaction_uuid: transactionUuid,
-          product_code: process.env.ESEWA_MERCHANT_ID,
+          product_code: productCode,
           product_service_charge: "0",
           product_delivery_charge: "0",
-          success_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/esewa/success`,
-          failure_url: `${process.env.NEXT_PUBLIC_BASE_URL}/payment/esewa/failure`,
+          success_url: `${baseUrl}/payment/esewa/success`,
+          failure_url: `${baseUrl}/payment/esewa/failure`,
           signed_field_names: "total_amount,transaction_uuid,product_code",
+          signature: signature,
+          product_name: productName
         };
 
-        const signatureString = `total_amount=${esewaConfig.total_amount},transaction_uuid=${esewaConfig.transaction_uuid},product_code=${esewaConfig.product_code}`;
-        const signature = generateEsewaSignature(
-          process.env.ESEWA_MERCHANT_SECRET!,
-          signatureString
-        );
+        // Validate all required fields are present and non-empty
+        const requiredFields = [
+          'amount', 'tax_amount', 'total_amount', 'transaction_uuid',
+          'product_code', 'success_url', 'failure_url', 'signature'
+        ];
+        
+        for (const field of requiredFields) {
+          if (!esewaConfig[field]) {
+            throw new Error(`Missing required eSewa field: ${field}`);
+          }
+        }
+
+        console.log('eSewa config:', esewaConfig);
 
         return {
           success: true,
           data: {
-            amount: amount,
-            esewaConfig: {
-              ...esewaConfig,
-              signature,
-              product_service_charge: Number(esewaConfig.product_service_charge),
-              product_delivery_charge: Number(esewaConfig.product_delivery_charge),
-              tax_amount: Number(esewaConfig.tax_amount),
-              total_amount: Number(esewaConfig.total_amount),
-            },
+            esewaConfig
           },
         };
       }
@@ -87,9 +112,6 @@ export async function initiatePayment(paymentData: PaymentRequestData) {
             phone: "9800000000",
           },
         };
-
-        console.log("Khalti Config:", khaltiConfig);
-        console.log("Khalti Secret Key:", process.env.KHALTI_SECRET_KEY);
 
         const response = await fetch(
           "https://a.khalti.com/api/v2/epayment/initiate/",
@@ -112,7 +134,6 @@ export async function initiatePayment(paymentData: PaymentRequestData) {
         }
 
         const khaltiResponse = await response.json();
-        console.log("Khalti payment initiated:", khaltiResponse);
         return {
           success: true,
           data: {

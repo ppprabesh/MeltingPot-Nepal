@@ -5,6 +5,10 @@ import Order from "@/model/Order";
 
 export async function POST(req: Request) {
   try {
+    if (!ESEWA_CONFIG.merchantSecret) {
+      throw new Error("Esewa merchant secret is not configured");
+    }
+
     const { orderId } = await req.json();
 
     // Get order details

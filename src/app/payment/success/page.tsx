@@ -17,7 +17,6 @@ import { Suspense } from "react";
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const method = searchParams.get("method");
-  
 
   useEffect(() => {
     if (method) {

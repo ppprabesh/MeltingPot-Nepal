@@ -10,6 +10,7 @@ import { toast } from "react-hot-toast";
 import { Loader2 } from "lucide-react";
 import Image from "next/image";
 import { initiatePayment } from "@/app/actions/payment";
+import { v4 as uuidv4 } from "uuid";
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -90,8 +91,8 @@ export default function CheckoutPage() {
         method: paymentMethod as "khalti" | "esewa",
       });
 
-      if (!paymentResult.success) {
-        throw new Error(paymentResult.error);
+      if (!paymentResult.success || !paymentResult.data) {
+        throw new Error(paymentResult.error || "Payment initialization failed");
       }
 
       // Clear cart after successful order creation
@@ -101,26 +102,91 @@ export default function CheckoutPage() {
       if (paymentMethod === "khalti" && paymentResult.data.khaltiPaymentUrl) {
         window.location.href = paymentResult.data.khaltiPaymentUrl;
       } else if (paymentMethod === "esewa" && paymentResult.data.esewaConfig) {
-        // Create form and submit for Esewa
+        // Create and submit eSewa form
         const form = document.createElement("form");
-        form.method = "POST";
-        form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+        form.setAttribute("method", "POST");
+        form.setAttribute("action", "https://rc-epay.esewa.com.np/api/epay/main/v2/form");
         
-        Object.entries(paymentResult.data.esewaConfig).forEach(([key, value]) => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = key;
-          input.value = value as string;
-          form.appendChild(input);
+        // Required eSewa parameters in the correct order
+        const params = {
+          amount: paymentResult.data.esewaConfig.amount,
+          tax_amount: paymentResult.data.esewaConfig.tax_amount,
+          total_amount: paymentResult.data.esewaConfig.total_amount,
+          transaction_uuid: paymentResult.data.esewaConfig.transaction_uuid,
+          product_code: paymentResult.data.esewaConfig.product_code,
+          product_service_charge: paymentResult.data.esewaConfig.product_service_charge,
+          product_delivery_charge: paymentResult.data.esewaConfig.product_delivery_charge,
+          success_url: paymentResult.data.esewaConfig.success_url,
+          failure_url: paymentResult.data.esewaConfig.failure_url,
+          signed_field_names: paymentResult.data.esewaConfig.signed_field_names,
+          signature: paymentResult.data.esewaConfig.signature
+        };
+
+        // Create hidden inputs for each parameter
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = key;
+            input.value = value.toString();
+            form.appendChild(input);
+          }
         });
-        
+
+        // Log the form data for debugging
+        console.log('eSewa form data:', params);
+
+        // Append form to body and submit
         document.body.appendChild(form);
         form.submit();
+      } else {
+        throw new Error("Invalid payment method or configuration");
       }
     } catch (error) {
       console.error("Error during checkout:", error);
       toast.error(error instanceof Error ? error.message : "Failed to process checkout. Please try again.");
       setIsLoading(false);
+    }
+  };
+
+  const handleEsewaSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    try {
+      const result = await initiatePayment({
+        amount: totalPrice.toString(),
+        productName: "Order Items",
+        transactionId: uuidv4(),
+        method: "esewa"
+      });
+
+      if (!result.success || !result.data?.esewaConfig) {
+        toast.error("Failed to initiate eSewa payment");
+        return;
+      }
+
+      const config = result.data.esewaConfig;
+      console.log("eSewa config:", config);
+
+      // Create and submit form
+      const form = document.createElement("form");
+      form.method = "POST";
+      form.action = "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
+
+      // Add hidden fields for all config parameters
+      Object.entries(config).forEach(([key, value]) => {
+        const input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = value.toString();
+        form.appendChild(input);
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    } catch (error) {
+      console.error("Error submitting eSewa payment:", error);
+      toast.error("Failed to process payment");
     }
   };
 

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import {
@@ -18,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { use } from "react";
 
 interface AccessoriesFormData {
   name: string;
@@ -36,8 +37,13 @@ interface AccessoriesFormData {
   currentImageUrl: string;
 }
 
-export default function EditAccessoriesPage({ params }: { params: { id: string } }) {
+interface EditAccessoriesPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function EditAccessoriesPage({ params }: EditAccessoriesPageProps) {
   const router = useRouter();
+  const resolvedParams = use(params);
   const [formData, setFormData] = useState<AccessoriesFormData>({
     name: "",
     code: "",
@@ -56,11 +62,12 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
   });
   const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchAccessory = async () => {
       try {
-        const response = await fetch(`/api/accessories/${params.id}`);
+        const response = await fetch(`/api/accessories/${resolvedParams.id}`);
         if (!response.ok) throw new Error("Failed to fetch accessory");
         const data = await response.json();
         setFormData({
@@ -80,6 +87,7 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
           currentImageUrl: data.accessoryItem.imageUrl,
         });
       } catch (error) {
+        setError(error instanceof Error ? error.message : "Failed to fetch accessory");
         toast({
           title: "Error",
           description: "Failed to fetch accessory details",
@@ -91,7 +99,7 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
     };
 
     fetchAccessory();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -107,6 +115,7 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const formDataToSend = new FormData();
@@ -128,7 +137,7 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
         formDataToSend.append("image", formData.image);
       }
 
-      const response = await fetch(`/api/accessories/${params.id}`, {
+      const response = await fetch(`/api/accessories/${resolvedParams.id}`, {
         method: "PUT",
         body: formDataToSend,
       });
@@ -145,10 +154,10 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
 
       router.push("/admin");
     } catch (error) {
-      console.error("Error updating accessory:", error);
+      setError(error instanceof Error ? error.message : "Failed to update accessory");
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update accessory",
+        description: "Failed to update accessory",
         variant: "destructive",
       });
     } finally {
@@ -158,7 +167,7 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/accessories/${params.id}`, {
+      const response = await fetch(`/api/accessories/${resolvedParams.id}`, {
         method: "DELETE",
       });
 
@@ -187,6 +196,20 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-red-500">{error}</p>
+        <Button
+          onClick={() => router.push("/admin")}
+          className="mt-4"
+        >
+          Back to Admin
+        </Button>
       </div>
     );
   }
@@ -276,14 +299,17 @@ export default function EditAccessoriesPage({ params }: { params: { id: string }
             <Select
               id="subType"
               value={formData.subType}
-              onChange={(e) => setFormData({ ...formData, subType: e.target.value })}
+              onValueChange={(value) => setFormData({ ...formData, subType: value })}
               required
               className="text-black"
             >
-              <option value="">Select a type</option>
-              <option value="Hammocks">Hammocks</option>
-              <option value="Bags">Bags</option>
-              <option value="Other">Other</option>
+              <SelectTrigger>
+                <SelectValue placeholder="Select a type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Hammocks">Hammocks</SelectItem>
+                <SelectItem value="Bags">Bags</SelectItem>
+              </SelectContent>
             </Select>
           </div>
 

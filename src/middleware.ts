@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
     }
 
     // Check admin session for all other admin routes
-    const adminCookie = request.cookies.get('admin_session');
+    const adminCookie = request.cookies.get('adminAuthenticated');
     if (!adminCookie || adminCookie.value !== 'true') {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }

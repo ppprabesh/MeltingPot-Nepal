@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,16 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Check if already logged in
+  useEffect(() => {
+    const cookies = document.cookie.split(';');
+    const adminCookie = cookies.find(cookie => cookie.trim().startsWith('adminAuthenticated='));
+    
+    if (adminCookie && adminCookie.split('=')[1].trim() === 'true') {
+      router.push("/admin");
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,14 +36,20 @@ export default function AdminLogin() {
         body: JSON.stringify({ username, password }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error("Invalid credentials");
+        throw new Error(data.error || "Invalid credentials");
       }
 
-      // Redirect to admin dashboard
-      router.push("/admin");
+      // Set admin session cookie with simpler options
+      document.cookie = `adminAuthenticated=true; path=/; max-age=3600`;
+      
+      // Force a hard redirect to ensure the session is properly set
+      window.location.href = "/admin";
     } catch (error) {
-      setError("Invalid username or password");
+      console.error("Login error:", error);
+      setError(error instanceof Error ? error.message : "Invalid username or password");
     } finally {
       setLoading(false);
     }

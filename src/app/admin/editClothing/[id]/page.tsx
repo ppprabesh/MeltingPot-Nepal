@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import Image from "next/image";
 import {
@@ -17,6 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { use } from "react";
 
 interface ClothingFormData {
   name: string;
@@ -32,8 +34,13 @@ interface ClothingFormData {
   currentImageUrl: string;
 }
 
-export default function EditClothingPage({ params }: { params: { id: string } }) {
+interface EditClothingPageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function EditClothingPage({ params }: EditClothingPageProps) {
   const router = useRouter();
+  const resolvedParams = use(params);
   const [formData, setFormData] = useState<ClothingFormData>({
     name: "",
     code: "",
@@ -49,11 +56,12 @@ export default function EditClothingPage({ params }: { params: { id: string } })
   });
   const [loading, setLoading] = useState(true);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchClothing = async () => {
       try {
-        const response = await fetch(`/api/clothing/${params.id}`);
+        const response = await fetch(`/api/clothing/${resolvedParams.id}`);
         if (!response.ok) throw new Error("Failed to fetch clothing");
         const data = await response.json();
         setFormData({
@@ -70,6 +78,7 @@ export default function EditClothingPage({ params }: { params: { id: string } })
           currentImageUrl: data.clothingItem.imageUrl,
         });
       } catch (error) {
+        setError(error instanceof Error ? error.message : "Failed to fetch clothing");
         toast({
           title: "Error",
           description: "Failed to fetch clothing details",
@@ -81,7 +90,7 @@ export default function EditClothingPage({ params }: { params: { id: string } })
     };
 
     fetchClothing();
-  }, [params.id]);
+  }, [resolvedParams.id]);
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -97,6 +106,7 @@ export default function EditClothingPage({ params }: { params: { id: string } })
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     try {
       const formDataToSend = new FormData();
@@ -112,7 +122,7 @@ export default function EditClothingPage({ params }: { params: { id: string } })
         formDataToSend.append("image", formData.image);
       }
 
-      const response = await fetch(`/api/clothing/${params.id}`, {
+      const response = await fetch(`/api/clothing/${resolvedParams.id}`, {
         method: "PUT",
         body: formDataToSend,
       });
@@ -129,10 +139,10 @@ export default function EditClothingPage({ params }: { params: { id: string } })
 
       router.push("/admin");
     } catch (error) {
-      console.error("Error updating clothing:", error);
+      setError(error instanceof Error ? error.message : "Failed to update clothing");
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update clothing",
+        description: "Failed to update clothing",
         variant: "destructive",
       });
     } finally {
@@ -142,7 +152,7 @@ export default function EditClothingPage({ params }: { params: { id: string } })
 
   const handleDelete = async () => {
     try {
-      const response = await fetch(`/api/clothing/${params.id}`, {
+      const response = await fetch(`/api/clothing/${resolvedParams.id}`, {
         method: "DELETE",
       });
 
@@ -171,6 +181,20 @@ export default function EditClothingPage({ params }: { params: { id: string } })
     return (
       <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-600"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center p-4">
+        <p className="text-red-500">{error}</p>
+        <Button
+          onClick={() => router.push("/admin")}
+          className="mt-4"
+        >
+          Back to Admin
+        </Button>
       </div>
     );
   }

@@ -38,11 +38,11 @@ export default function ClothingPage() {
             </div>
             <div className="flex-1 relative h-[300px] sm:h-[350px] md:h-[400px] w-full">
               <Image
-                src="/clothing-hero.jpg"
-                alt="Sustainable Clothing"
-                fill
-                className="rounded-lg object-cover"
-                priority
+                src="/images/dsofMomo.jpg"
+                alt="Traditional Nepali Clothing"
+                width={1200}
+                height={600}
+                className="w-full h-96 object-cover rounded-lg"
               />
             </div>
           </div>

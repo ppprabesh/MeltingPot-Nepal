@@ -1,126 +1,155 @@
 import { NextRequest, NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import { connectToDatabase } from "@/lib/db";
 import { Product } from "@/model/Product";
-import { uploadImage } from "@/lib/cloudinary";
-import mongoose from "mongoose";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+import { existsSync } from "fs";
 
 // ✅ Fetch a single clothing item by ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    await dbConnect();
-
-    const id = params.id?.trim();
-  
+    const { id } = context.params;
     if (!id) {
-      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Clothing ID is required" },
+        { status: 400 }
+      );
     }
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
-    }
+    await connectToDatabase();
+    const clothingItem = await Product.findOne({ _id: id, type: 'Clothing' });
 
-    const clothingItem = await Product.findById(id);
     if (!clothingItem) {
-      return NextResponse.json({ error: "Clothing item not found" }, { status: 404 });
+      return NextResponse.json(
+        { error: "Clothing not found" },
+        { status: 404 }
+      );
     }
-    return NextResponse.json({ clothingItem }, { status: 200 });
+
+    return NextResponse.json({ clothingItem });
   } catch (error) {
-    console.error("Error fetching clothing item:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error fetching clothing:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch clothing" },
+      { status: 500 }
+    );
   }
 }
 
 // ✅ Update a clothing item by ID
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    await dbConnect();
-
-    const id = params.id?.trim();
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    const { id } = context.params;
+    if (!id) {
+      return NextResponse.json(
+        { error: "Clothing ID is required" },
+        { status: 400 }
+      );
     }
 
     const formData = await request.formData();
-    const updates: Record<string, any> = {};
+    const name = formData.get("name") as string;
+    const code = formData.get("code") as string;
+    const price = parseFloat(formData.get("price") as string);
+    const stock = parseInt(formData.get("stock") as string);
+    const description = formData.get("description") as string;
+    const size = formData.get("size") as string;
+    const color = formData.get("color") as string;
+    const material = formData.get("material") as string;
+    const image = formData.get("image") as File;
 
-    const fields = ["name", "code", "price", "stock", "size", "color", "material", "description"];
-    fields.forEach((field) => {
-      const value = formData.get(field);
-      if (value !== null) {
-        if (["stock", "price"].includes(field)) {
-          const numValue = parseFloat(value as string);
-          if (isNaN(numValue)) {
-            throw new Error(`Invalid ${field} value`);
-          }
-          if (field === "price" && numValue <= 0) {
-            throw new Error("Price must be positive");
-          }
-          if (field === "stock" && numValue < 0) {
-            throw new Error("Stock cannot be negative");
-          }
-          updates[field] = numValue;
-        } else {
-          updates[field] = value;
-        }
-      }
-    });
-
-    if (formData.has("image")) {
-      const imageFile = formData.get("image") as File;
-      if (imageFile) {
-        const imageBuffer = await imageFile.arrayBuffer();
-        const imageBase64 = Buffer.from(imageBuffer).toString("base64");
-        const imagePath = `data:${imageFile.type};base64,${imageBase64}`;
-        updates.imageUrl = await uploadImage(imagePath);
-      }
+    if (!name || !code || isNaN(price) || isNaN(stock)) {
+      return NextResponse.json(
+        { error: "Missing required fields" },
+        { status: 400 }
+      );
     }
 
-    const updatedClothing = await Product.findByIdAndUpdate(id, updates, { new: true });
+    await connectToDatabase();
+    const clothingItem = await Product.findOne({ _id: id, type: 'Clothing' });
 
-    if (!updatedClothing) {
-      return NextResponse.json({ error: "Clothing item not found" }, { status: 404 });
+    if (!clothingItem) {
+      return NextResponse.json(
+        { error: "Clothing not found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ updatedClothing }, { status: 200 });
+    let imageUrl = clothingItem.imageUrl;
+
+    if (image) {
+      const bytes = await image.arrayBuffer();
+      const buffer = Buffer.from(bytes);
+      const uploadsDir = join(process.cwd(), "public", "uploads");
+      
+      // Create uploads directory if it doesn't exist
+      if (!existsSync(uploadsDir)) {
+        await mkdir(uploadsDir, { recursive: true });
+      }
+      
+      const path = join(uploadsDir, image.name);
+      await writeFile(path, buffer);
+      imageUrl = `/uploads/${image.name}`;
+    }
+
+    clothingItem.name = name;
+    clothingItem.code = code;
+    clothingItem.price = price;
+    clothingItem.stock = stock;
+    clothingItem.description = description;
+    clothingItem.size = size;
+    clothingItem.color = color;
+    clothingItem.material = material;
+    clothingItem.imageUrl = imageUrl;
+
+    await clothingItem.save();
+
+    return NextResponse.json({ clothingItem });
   } catch (error) {
-    console.error("Error updating clothing item:", error);
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error updating clothing:", error);
+    return NextResponse.json(
+      { error: "Failed to update clothing" },
+      { status: 500 }
+    );
   }
 }
 
 // ✅ Delete a clothing item by ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ) {
   try {
-    await dbConnect();
-
-    const id = params.id?.trim();
-
-    if (!id || !mongoose.Types.ObjectId.isValid(id)) {
-      return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
+    const { id } = context.params;
+    if (!id) {
+      return NextResponse.json(
+        { error: "Clothing ID is required" },
+        { status: 400 }
+      );
     }
 
-    const deletedClothing = await Product.findByIdAndDelete(id);
+    await connectToDatabase();
+    const clothingItem = await Product.findOneAndDelete({ _id: id, type: 'Clothing' });
 
-    if (!deletedClothing) {
-      return NextResponse.json({ error: "Clothing item not found" }, { status: 404 });
+    if (!clothingItem) {
+      return NextResponse.json(
+        { error: "Clothing not found" },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ message: "Clothing item deleted successfully" }, { status: 200 });
+    return NextResponse.json({ message: "Clothing deleted successfully" });
   } catch (error) {
-    console.error("Error deleting clothing item:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    console.error("Error deleting clothing:", error);
+    return NextResponse.json(
+      { error: "Failed to delete clothing" },
+      { status: 500 }
+    );
   }
 }

@@ -1,8 +1,18 @@
+"use client";
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 export default function PaymentFailure() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.push("http://localhost:3000/payment/success");
+  }, [router]);
+
   return (
     <div className="container mx-auto px-4 py-8">
       <Card className="max-w-md mx-auto">
@@ -15,15 +25,23 @@ export default function PaymentFailure() {
             There was an issue processing your payment. This could be due to insufficient funds, incorrect card details, or a temporary issue with the payment gateway.
           </p>
           <div className="flex flex-col space-y-2">
-            <Link href="/checkout">
-              <Button variant="default" className="w-full">Try Again</Button>
-            </Link>
-            <Link href="/contact">
-              <Button variant="outline" className="w-full">Contact Support</Button>
-            </Link>
+            <Button 
+              variant="default" 
+              className="w-full"
+              onClick={() => router.push('/checkout')}
+            >
+              Try Again
+            </Button>
+            <Button 
+              variant="outline" 
+              className="w-full"
+              onClick={() => router.push('/contact')}
+            >
+              Contact Support
+            </Button>
           </div>
         </CardContent>
       </Card>
     </div>
   );
-} 
+}

@@ -64,12 +64,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
   return (
     <div className="flex flex-col rounded-lg bg-white p-4 shadow-md hover:shadow-lg transition-shadow">
       {/* Product Image */}
-      <div className="relative w-full aspect-square mb-4">
+      <div className="relative w-full h-64 mb-4">
         <Image
           src={product.imageUrl}
           alt={product.name}
           fill
-          className="rounded-lg object-contain"
+          className="rounded-lg object-cover"
           priority={false}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />

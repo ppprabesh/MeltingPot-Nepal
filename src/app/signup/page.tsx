@@ -16,7 +16,7 @@ export default function SignupPage() {
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-black/20" />
         <Image
-          src="/images/meltingpot/logoo2-removebg-preview.png"
+          src="/images/themeltingpotlogo.png"
           alt="The Melting Pot Logo"
           fill
           className="object-cover opacity-10"
@@ -29,7 +29,7 @@ export default function SignupPage() {
         <div className="w-full max-w-md">
           <div className="flex justify-center mb-8">
             <Image
-              src="/images/meltingpot/logoo2-removebg-preview.png"
+              src="/images/themeltingpotlogo.png"
               alt="The Melting Pot Logo"
               width={200}
               height={100}
